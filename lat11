@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebGIS Sleman - GeoServer + Leaflet</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- JQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Library Geoserver untuk Leaflet -->
+    <script src="lib/L.Geoserver.js"></script>
+</head>
+
+<body <h3 style="text-align:center;">WebGIS Data Penduduk Sleman</h3>
+
+    <div id="map" style="width: 100%; height: 600px;"></div>
+
+    <script>
+
+        // 1. Inisialisasi Map
+        var map = L.map('map').setView([-7.75, 110.37], 11);
+
+        // 2. Basemap
+        var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+        osm.addTo(map);
+
+        var jalan = L.Geoserver.wms("https://geoportal.slemankab.go.id/geoserver/wms", {
+            layers: "geonode:jalan_kabupaten_sleman_2023",
+            format: "image/png",
+            transparent: true
+        });
+        jalan.addTo(map);
+
+        var adminDesa = L.Geoserver.wms("http://localhost:8080/geoserver/wms", {
+            layers: "pg_webX:ADMINISTRASIDESA_AR_25K",
+            format: "image/png",
+            transparent: true
+        });
+
+        adminDesa.addTo(map);
+
+
+        // 3. Layer WMS dari GeoServer (menggunakan L.Geoserver)
+        var pendudukWMS = L.Geoserver.wms("http://localhost:8080/geoserver/wms", {
+            layers: "pg_webX:penduduk_sleman_view",
+            transparent: true,
+            format: "image/png",
+            attribution: "Data Penduduk Sleman"
+        });
+
+        pendudukWMS.addTo(map);
+
+        // 4. Legend (langsung dari GeoServer)
+        var legend = L.Geoserver.legend("http://localhost:8080/geoserver", {
+            layers: "pg_webX:penduduk_sleman_view"
+        });
+
+        legend.addTo(map);
+
+
+    </script>
+
+</body>
+
+</html>
