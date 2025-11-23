@@ -2,7 +2,9 @@
 <html>
 
 <head>
-    <title>WebGIS Sleman - GeoServer + Leaflet</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>WebGIS Sleman (GeoServer + Leaflet)</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -19,55 +21,83 @@
     <script src="lib/L.Geoserver.js"></script>
 </head>
 
-<body <h3 style="text-align:center;">WebGIS Data Penduduk Sleman</h3>
+<body class="bg-light">
+    <div class="container mt-4">
+        <div class="card shadow border-primary" style="border-width:2px;">
+            <div class="card-body bg-white rounded">
+                <h3 class="text-center text-primary fw-bold">WebGIS Data Penduduk Sleman<br><small
+                        class="text-secondary fw-semibold">Dibuat oleh: Anastasia Anindhita Ananggadhatu</small></h3>
 
-    <div id="map" style="width: 100%; height: 600px;"></div>
+                <div id="map" style="width: 100%; height: 600px;"></div>
 
-    <script>
+                <script>
+                    // Inisialisasi Map
+                    var map = L.map('map').setView([-7.75, 110.37], 11);
 
-        // 1. Inisialisasi Map
-        var map = L.map('map').setView([-7.75, 110.37], 11);
+                    // Basemap
+                    var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+                    osm.addTo(map);
 
-        // 2. Basemap
-        var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-        osm.addTo(map);
+                    // Layer GeoServer
+                    var adminDesa = L.Geoserver.wms("http://localhost:8080/geoserver/wms", {
+                        layers: "pg_webX:ADMINISTRASI_AR_KECAMATAN",
+                        format: "image/png",
+                        transparent: true
+                    });
 
-        var jalan = L.Geoserver.wms("https://geoportal.slemankab.go.id/geoserver/wms", {
-            layers: "geonode:jalan_kabupaten_sleman_2023",
-            format: "image/png",
-            transparent: true
-        });
-        jalan.addTo(map);
+                    var jalan = L.Geoserver.wms("https://geoportal.slemankab.go.id/geoserver/wms", {
+                        layers: "geonode:jalan_kabupaten_sleman_2023",
+                        format: "image/png",
+                        transparent: true
+                    });
 
-        var adminDesa = L.Geoserver.wms("http://localhost:8080/geoserver/wms", {
-            layers: "pg_webX:ADMINISTRASIDESA_AR_25K",
-            format: "image/png",
-            transparent: true
-        });
+                    var pendudukWMS = L.Geoserver.wms("http://localhost:8080/geoserver/wms", {
+                        layers: "pg_webX:penduduk_sleman_view",
+                        transparent: true,
+                        format: "image/png"
+                    });
 
-        adminDesa.addTo(map);
+                    // Tambahkan ke map dengan urutan yang benar
+                    adminDesa.addTo(map);
+                    jalan.addTo(map);
+                    pendudukWMS.addTo(map);
 
+                    // Marker titik penduduk
+                    var titikPenduduk = [
+                        { nama: "Kalasan", lon: 110.471, lat: -7.7686, luas: 39.94, jumlah: 86000 },
+                        { nama: "Moyudan", lon: 110.265, lat: -7.746, luas: 28.71, jumlah: 42310 },
+                        { nama: "Prambanan", lon: 110.48, lat: -7.755, luas: 38.11, jumlah: 41980 },
+                        { nama: "Cangkringan", lon: 110.46, lat: -7.59, luas: 47.45, jumlah: 33870 },
+                        { nama: "Depok", lon: 110.4, lat: -7.769, luas: 23.87, jumlah: 109351 }
+                    ];
 
-        // 3. Layer WMS dari GeoServer (menggunakan L.Geoserver)
-        var pendudukWMS = L.Geoserver.wms("http://localhost:8080/geoserver/wms", {
-            layers: "pg_webX:penduduk_sleman_view",
-            transparent: true,
-            format: "image/png",
-            attribution: "Data Penduduk Sleman"
-        });
+                    var markerLayer = L.layerGroup();
 
-        pendudukWMS.addTo(map);
+                    titikPenduduk.forEach(function (item) {
+                        var marker = L.marker([item.lat, item.lon]);
+                        marker.bindPopup(
+                            "<b>" + item.nama + "</b><br>" +
+                            "Jumlah Penduduk: " + item.jumlah + " jiwa<br>" +
+                            "Luas Area: " + item.luas + " km²"
+                        );
+                        markerLayer.addLayer(marker);
+                    });
 
-        // 4. Legend (langsung dari GeoServer)
-        var legend = L.Geoserver.legend("http://localhost:8080/geoserver", {
-            layers: "pg_webX:penduduk_sleman_view"
-        });
+                    markerLayer.addTo(map);
 
-        legend.addTo(map);
+                    // Layer Control
+                    var overlays = {
+                        "Administrasi Kecamatan": adminDesa,
+                        "Jalan Kabupaten": jalan,
+                        "Peta Penduduk (WMS)": pendudukWMS,
+                        "Titik Penduduk": markerLayer
+                    };
 
+                    L.control.layers(null, overlays).addTo(map);
 
-    </script>
-
+                </script>
+            </div>
+        </div>
 </body>
 
 </html>
